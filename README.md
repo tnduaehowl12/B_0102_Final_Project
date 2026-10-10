@@ -1,4 +1,21 @@
 # B_0102_Final_Project
+
+## 브랜치
+
+팀마다 브랜치 하나를 씁니다. 팀 브랜치에는 **그 팀이 쓰는 패키지와 공통 메시지(`scv_msgs`)만** 들어 있습니다. `main` 은 모든 패키지가 들어 있는 통합본입니다.
+
+| 팀 | 브랜치 | 들어 있는 패키지 |
+| --- | --- | --- |
+| 비전·물리 인프라 | `feature/vision` | `scv_detection`, `scv_msgs` |
+| 주행·작업 실행 | `feature/driving` | `scv_nav`, `scv_msgs` |
+| 관제·작업 관리 | `feature/control` | `scv_manager`, `scv_monitor`, `scv_msgs` |
+| 통신 인프라·RSSI | `feature/survey` | `scv_survey`, `scv_msgs` |
+| PM + 통합 | `feature/pm` | `scv_bringup`, `scv_testbed`, `scv_msgs` |
+| 통합본 | `main` | 전부 |
+
+- 자기 팀 브랜치에서만 커밋합니다. `main` 에는 PM 이 통합합니다.
+- **팀 브랜치에 `main` 을 merge 하지 않습니다** (다른 팀 패키지가 다시 들어옵니다). `scv_msgs` 나 문서가 바뀌면 PM 이 팀 브랜치에 맞춰 넣고, 팀원은 `git pull` 만 하면 됩니다.
+
 ## 폴더 구조
 
 ```text
