@@ -14,7 +14,7 @@ setup(
     zip_safe=True,
     maintainer='doyoon-kim',
     maintainer_email='tnduaehowl37@gmail.com',
-    description='관제 PC: ros_bridge, 관제 웹(Flask), webcam_node',
+    description='관제 PC: ros_bridge, 관제 웹(Flask)',
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [

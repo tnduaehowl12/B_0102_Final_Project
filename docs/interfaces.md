@@ -4,6 +4,7 @@
 
 v0.2: 회차 전달·근거 사진·후보 발견 로봇·재개/재배정·각도 rad·scv_survey 패키지
 v0.2.1: 로봇 이름공간 `/robot4`·`/robot3`, 모든 기기 turtle08, 빌드 전 가상환경 끄기, 자세 보정 "뒤로" 처리 제안
+v0.2.2: 고정 웹캠은 쓰지 않습니다 (10/10 PM 결정) — `webcam_node` 없음, CAM 탭은 로봇 카메라(OAK-D)만
 
 팀 사이에 오가는 토픽·서비스·액션과 그 타입을 한곳에 모았습니다. 타입 정의는 `ros2_ws/src/scv_msgs/` 에 있습니다. 고칠 것이 있으면 그 약속의 **주인**에게 말하고, 주인이 `scv_msgs` 와 이 문서를 함께 고칩니다.
 
@@ -23,7 +24,7 @@ v0.2.1: 로봇 이름공간 `/robot4`·`/robot3`, 모든 기기 turtle08, 빌드
 | `scv_nav` | 로봇 PC | `mission_executor`, Nav2 설정 | 주행 |
 | `scv_detection` | 로봇 PC | `detection_alert` | 비전·물리 인프라 |
 | `scv_manager` | 관제 PC | `inspection_manager` | 관제·작업 관리 (A) |
-| `scv_monitor` | 관제 PC | `ros_bridge`, 관제 웹, `webcam_node` | 관제·작업 관리 (B) |
+| `scv_monitor` | 관제 PC | `ros_bridge`, 관제 웹 | 관제·작업 관리 (B) |
 | `scv_bringup` | 5대 전부 | launch, params, 지도, `facilities.yaml` | PM |
 | `scv_testbed` | PC | 가짜 데이터 도구, 시험 스크립트 | PM |
 
@@ -31,7 +32,7 @@ v0.2.1: 로봇 이름공간 `/robot4`·`/robot3`, 모든 기기 turtle08, 빌드
 
 ## 인터페이스
 
-IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 번호). IF-01(핫스팟 RF) · 17(Socket.IO·SQL) · 18(HTTP·웹캠 USB)은 ROS 밖이라 이 표에 없다 (다이어그램 참고).
+IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 번호). IF-01(핫스팟 RF) · 17(Socket.IO·SQL) · 18(HTTP)은 ROS 밖이라 이 표에 없다 (다이어그램 참고).
 
 | IF | 이름 | 종류 · 타입 | 보내는 쪽 → 받는 쪽 | QoS · 주기 | 주인 |
 | --- | --- | --- | --- | --- | --- |

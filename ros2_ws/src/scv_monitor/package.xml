@@ -3,7 +3,7 @@
 <package format="3">
   <name>scv_monitor</name>
   <version>0.1.0</version>
-  <description>관제 PC: ros_bridge, 관제 웹(Flask), webcam_node</description>
+  <description>관제 PC: ros_bridge, 관제 웹(Flask)</description>
   <maintainer email="tnduaehowl37@gmail.com">doyoon-kim</maintainer>
   <license>TODO: License declaration</license>
 
