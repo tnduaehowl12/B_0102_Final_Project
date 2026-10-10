@@ -41,7 +41,7 @@ TurtleBot4 두 대를 이동형 인프라 점검 플랫폼으로 써서, 물리 
 | `scv_bringup` | 전부 | 기기별 launch, 설정(`facilities.yaml`, `zones.yaml`), 지도 | PM · `feature/pm` |
 | `scv_testbed` | PC | 시험 스크립트 | PM · `feature/pm` |
 
-팀 브랜치에는 그 팀 패키지와 `scv_msgs` 만 있고, `main` 이 통합본이다. 로봇 PC·관제 PC·RPi 는 `main` 으로 돌린다.
+모든 브랜치에 패키지 전체가 있고 팀은 자기 패키지만 고친다. `main` 이 통합본이다. 로봇 PC·관제 PC·RPi 는 `main` 으로 돌린다.
 
 실행:
 
