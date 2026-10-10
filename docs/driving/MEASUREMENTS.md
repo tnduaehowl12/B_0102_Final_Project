@@ -35,18 +35,23 @@ PLAN.md 각 단계의 「완료 기준」에 해당하는 실측값을 모아 �
 
 `latency_check.py -p step:=true`: 정지 상태에서 cmd_vel 0.3 rad/s를 0.5 s 보내고, odom의 angular.z가 0.1 rad/s를 넘을 때까지의 시간. 20회.
 
-| n | mean | p95 | max | min | 분포 |
-| --- | --- | --- | --- | --- | --- |
-| 20 | 170 ms | 218 ms | 224 ms | 약 128 ms | 120–180 ms 12회, 200–230 ms 8회 (두 무리) |
+데이터: `data/2026-10-10_robot3_step.csv` (회차별 값)
+
+| n | mean | median | p95 | max | min | 분포 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 20 | 170 ms | 164 ms | 218 ms | 224 ms | 128 ms | 120–180 ms 12회, 200–230 ms 8회 (두 무리) |
+
+회차별(ms): 128, 215, 141, 169, 204, 131, 215, 139, 129, 159, 140, 224, 201, 131, 218, 143, 176, 202, 131, 212
 
 - 두 무리로 갈리는 것은 로봇 쪽 제어 주기와 명령 도착 시점의 위상 차이로 보임(odom 50 ms 간격에 맞물림). 원인은 미확인.
 - **1-2 허용 기준 제안**: cmd_vel→odom p95 ≤ 250 ms. Nav2 컨트롤러 20 Hz(50 ms) 기준 약 4주기 늦으므로 3-3 튜닝 때 `controller_frequency`·`transform_tolerance`에 반영. 초과 시 대응: controller 주기 낮추기 → transform_tolerance 올리기 → 5 GHz 대역.
 
-그래프: `../daily/barlide/img/2026-10-10_robot3_step.png` (회차별 값은 그래프에만 있음. CSV 없음 — 다음 측정부터 `csv` 파라미터로 함께 기록)
+그래프: `../daily/barlide/img/2026-10-10_robot3_step.png`
 
 ### 1-3 cmd_vel 끊김 시 동작
 
 0.2 m/s 직진 중 cmd_vel 발행 프로세스를 `kill -9`로 끊고, odom linear.x가 0이 될 때까지 관찰. 3회.
+데이터: `data/2026-10-10_robot3_cmdcut/` (rosbag2 mcap, /robot3/odom 3044건 + /robot3/cmd_vel 995건)
 
 | 회차 | 정지까지 | 정지 위치(시작선 기준) |
 | --- | --- | --- |
@@ -119,4 +124,4 @@ robot3에서는 이날 Nav2 bringup을 돌리지 않았다(측정은 모두 odom
 
 - [ ] robot3 Nav2 bringup 시간·결과 측정(도킹/언도킹 각각) — 2-1과 함께
 - [ ] robot4로 1-1~1-4 같은 측정 (두 로봇 비교)
-- [ ] step 시험 회차별 값을 CSV로 남기도록 `latency_check.py` 보완, cmd_vel 수신 간격·최대 공백 측정 모드 추가
+- [ ] `latency_check.py`에 step 결과 CSV 저장과 cmd_vel 수신 간격·최대 공백 측정 모드 추가
