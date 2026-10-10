@@ -5,6 +5,7 @@
 v0.2: 회차 전달·근거 사진·후보 발견 로봇·재개/재배정·각도 rad·scv_survey 패키지
 v0.2.1: 로봇 이름공간 `/robot4`·`/robot3`, 모든 기기 turtle08, 빌드 전 가상환경 끄기, 자세 보정 "뒤로" 처리 제안
 v0.2.2: 고정 웹캠은 쓰지 않습니다 (10/10 PM 결정) — `webcam_node` 없음, CAM 탭은 로봇 카메라(OAK-D)만
+v0.2.3: 미검출을 RSSI −100 으로 적지 않습니다 — `NetRaw`·`NetSample` 에 `detected` 추가, 미검출 샘플의 `rssi_dbm` 은 쓰지 않음 (10/10 PM·RSSI 팀)
 
 팀 사이에 오가는 토픽·서비스·액션과 그 타입을 한곳에 모았습니다. 타입 정의는 `ros2_ws/src/scv_msgs/` 에 있습니다. 고칠 것이 있으면 그 약속의 **주인**에게 말하고, 주인이 `scv_msgs` 와 이 문서를 함께 고칩니다.
 
@@ -57,8 +58,8 @@ IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 
 
 | 타입 | 담는 것 |
 | --- | --- |
-| `NetRaw` | 측정 시각, 로봇, 핫스팟 RSSI (미검출 −100) |
-| `NetSample` | `NetRaw` + seq, 회차, 위치(x·y·yaw), `pose_ok`, `resent` |
+| `NetRaw` | 측정 시각, 로봇, 검출 여부, 핫스팟 RSSI |
+| `NetSample` | `NetRaw` + seq, 회차, 위치(x·y·yaw), `pose_ok`, `resent` (검출 여부 포함) |
 | `RobotStatus` | 상태, 배터리, 새 작업을 받는지, 수행 중인 작업·진행률, 위치, 경고, 회차 |
 | `Candidate` | 이상 후보: 출처(네트워크·비전), 종류, 대상, 갈 위치, 점수, 근거, 발견 로봇·회차 |
 | `InspectionResult` | 설비 판정 한 건: 설비, 종류, 판정, 사진, 관측 횟수, 사진 축소본(CompressedImage) |
@@ -77,7 +78,8 @@ IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 
 
 | 무엇 | 임시로 정한 내용 | 확인할 사람 |
 | --- | --- | --- |
-| `NetRaw` 필드 | 시각, `robot_id`, `rssi_dbm` 세 가지뿐 | RSSI A |
+| `NetRaw` 필드 | 시각, `robot_id`, `detected`, `rssi_dbm` | RSSI |
+| 미검출 처리 | 미검출 샘플은 RSSI 통계에 넣지 않고, 지도 칸마다 미검출 비율을 따로 센다 (주행과 묶은 시험에서 바뀔 수 있음) | RSSI · 주행 |
 | `SyncSamples` 응답 | 샘플을 응답에 담지 않고 `survey/sample` 로 다시 발행, 응답은 개수만 | RSSI A · 관제 B |
 | `RobotStatus` 필드 전체 | 상태 7가지, `accepting_tasks`, `warning` 등 | 관제 A · 주행 |
 | `InspectionResult` 필드 전체 | 판정·종류 상수를 여기에 두고 `InspectFacility` 가 함께 씀 | 비전 B · 관제 |
