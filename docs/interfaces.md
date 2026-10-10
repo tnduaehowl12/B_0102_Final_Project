@@ -5,6 +5,7 @@
 v0.2: 회차 전달·근거 사진·후보 발견 로봇·재개/재배정·각도 rad·scv_survey 패키지
 v0.2.1: 로봇 이름공간 `/robot4`·`/robot3`, 모든 기기 turtle08, 빌드 전 가상환경 끄기, 자세 보정 "뒤로" 처리 제안
 v0.2.2: 고정 웹캠은 쓰지 않습니다 (10/10 PM 결정) — `webcam_node` 없음, CAM 탭은 로봇 카메라(OAK-D)만
+v0.2.4: 설정 파일 형식(`facilities.yaml`, `zones.yaml`)과 기기별 launch 뼈대 추가
 v0.2.3: 미검출을 RSSI −100 으로 적지 않습니다 — `NetRaw`·`NetSample` 에 `detected` 추가, 미검출 샘플의 `rssi_dbm` 은 쓰지 않음 (10/10 PM·RSSI 팀)
 
 팀 사이에 오가는 토픽·서비스·액션과 그 타입을 한곳에 모았습니다. 타입 정의는 `ros2_ws/src/scv_msgs/` 에 있습니다. 고칠 것이 있으면 그 약속의 **주인**에게 말하고, 주인이 `scv_msgs` 와 이 문서를 함께 고칩니다.
@@ -93,6 +94,27 @@ IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 
 | `Reassign` 형식 | 보낼 로봇 · 받을 로봇(비우면 manager) → 옮긴 작업 수 | 관제 A |
 | `resent` | sync 요청으로 다시 보낸 샘플만 true | RSSI A · 관제 B |
 | 자세 보정 "뒤로" (`adjust_forward_m` < 0) | 로봇이 후진 명령을 무시한 적이 있고 후진은 지양. mission_executor는 보정값을 cmd_vel로 보내지 않고 **Nav2 목표 위치로 바꿔** 보낸다 (뒤 지점이면 돌아서 갔다가 방향을 다시 맞춤). Nav2 행동 트리의 BackUp 복구 동작은 뺀다. 설비 관측 위치는 1.0–1.2 m로 등록해 뒤로 물러날 일을 줄인다 (OAK-D depth는 약 0.7 m부터 유효) (제안) | 비전 B · 주행 |
+
+## 설정 파일 (형식 초안)
+
+`ros2_ws/src/scv_bringup/config/` 에 있습니다 (`main` 과 `feature/pm`). 팀 브랜치에는 `scv_bringup` 이 없으니 형식은 여기서 봅니다. 값은 테스트베드에서 잰 뒤 PM 이 채웁니다. 좌표는 저장 지도(`map`) 기준 [m], 각도 [rad].
+
+```yaml
+# facilities.yaml — 설비 등록. kind 는 InspectionResult 의 KIND_* 와 같다
+facilities:
+  - id: EXT-01
+    kind: extinguisher                  # extinguisher · shutter · exit_light
+    expected: {x: 0.0, y: 0.0}          # 설비가 있어야 할 위치 (shutter 는 band: 하강 띠의 네 꼭짓점)
+    view: {x: 0.0, y: 0.0, yaw: 0.0}    # 로봇이 서서 볼 자세 (설비에서 1.0–1.2 m)
+
+# zones.yaml — 측정 구역
+zones:
+  - id: Z1
+    polygon: [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+    spacing: 1.0                        # 왕복 경로 간격 [m]
+```
+
+기기별 실행: `ros2 launch scv_bringup robot_rpi.launch.py robot_ns:=robot4` · `robot_pc.launch.py robot_ns:=robot4` · `control_pc.launch.py` — 노드가 준비되면 PM 이 launch 에 넣습니다.
 
 ## 빌드
 
