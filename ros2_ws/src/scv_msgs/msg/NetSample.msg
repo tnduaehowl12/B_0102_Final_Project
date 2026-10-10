@@ -9,4 +9,5 @@ float32 y
 float32 yaw                     # [rad]
 bool    pose_ok                 # false 면 위치 불확실 → 지도 계산에서 제외 (E5)
 bool    resent                  # survey/sync 요청으로 다시 보낸 샘플이면 true
-int16   rssi_dbm                # 핫스팟 RSSI (미검출 NetRaw.RSSI_NOT_DETECTED)
+bool    detected                # 이번 스캔에서 핫스팟이 보였는지 (NetRaw 의 값)
+int16   rssi_dbm                # 핫스팟 RSSI [dBm]. detected 가 false 면 쓰지 않는다
