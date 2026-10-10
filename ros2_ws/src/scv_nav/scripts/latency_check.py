@@ -2,7 +2,9 @@
 # PLAN 1-1·1-2: Wi-Fi 너머 scan·odom 수신 지연, cmd_vel→odom 반응 지연 측정
 #   python3 latency_check.py --ros-args -r __ns:=/robot3                 # 10초마다 수신 지연 (로봇 안 움직임)
 #   python3 latency_check.py --ros-args -r __ns:=/robot3 -p step:=true   # 0.3 rad/s 0.5초 회전 ×20, 반응 지연 (로봇 움직임)
+#   -p csv:=~/scv_logs/xxx.csv 를 붙이면 메시지마다 기록 (그래프용)
 # 수신 지연(받은 시각 - header.stamp)은 로봇 PC·RPi 시계(chrony)가 맞아야 의미가 있다.
+import os
 import threading
 import time
 
@@ -24,6 +26,8 @@ class LatencyCheck(Node):
     def __init__(self):
         super().__init__('latency_check')
         self.step = self.declare_parameter('step', False).value
+        csv_path = self.declare_parameter('csv', '').value   # 지정하면 메시지마다 t_recv,topic,delay_ms 기록
+        self.csv = open(os.path.expanduser(csv_path), 'a') if csv_path else None
         self.delays = {'scan': [], 'odom': []}
         self.wz, self.wz_time = 0.0, 0.0
         self.create_subscription(LaserScan, 'scan', lambda m: self.on_msg('scan', m), qos_profile_sensor_data)
@@ -34,8 +38,11 @@ class LatencyCheck(Node):
         self.get_logger().info(f'Latency check started (step={self.step})')
 
     def on_msg(self, name, msg):
-        stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-        self.delays[name].append((time.time() - stamp) * 1000)
+        now = time.time()
+        delay = (now - (msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9)) * 1000
+        self.delays[name].append(delay)
+        if self.csv:
+            self.csv.write(f'{now:.6f},{name},{delay:.2f}\n')
 
     def on_odom(self, msg):
         self.on_msg('odom', msg)
@@ -92,6 +99,8 @@ def main():
         node.stop()
         rclpy.shutdown()
         spin.join()
+        if node.csv:
+            node.csv.close()
 
 
 if __name__ == '__main__':
