@@ -1,0 +1,17 @@
+# IF-11 {ns}/execute_task · inspection_manager(관제 PC) → mission_executor(로봇 PC)
+uint8 SURVEY_SEGMENT=0
+uint8 FACILITY_CHECK=1
+uint8 REINSPECTION=2
+uint8 DOCK=3
+
+string task_id
+uint8  type
+uint8  priority
+geometry_msgs/PoseStamped[] waypoints
+string target_ref               # 칸·설비·후보 id
+---
+bool   ok
+string reason                   # 실패·건너뜀 사유 (예: BLOCKED)
+---
+uint16  waypoint_index
+float32 progress                # 0.0–1.0

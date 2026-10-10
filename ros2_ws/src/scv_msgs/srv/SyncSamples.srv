@@ -1,0 +1,8 @@
+# IF-09 {ns}/survey/sync · ros_bridge(관제 PC) → survey_buffer(로봇 PC)
+# 재연결 뒤 from_seq 부터의 샘플을 {ns}/survey/sample 로 다시 발행해 달라고 요청한다.
+uint32 run_id
+uint32 from_seq
+---
+bool   ok
+uint32 last_seq                 # 버퍼에 있는 마지막 seq
+uint32 count                    # 다시 발행할 샘플 수

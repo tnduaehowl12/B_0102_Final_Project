@@ -1,0 +1,9 @@
+# IF-04 {ns}/survey/precise · mission_executor(로봇 PC) → rssi_scanner(RPi)
+# 정지한 채 duration_s 동안 반복 스캔한다 (재검증·회피 경계 재측정).
+uint16 duration_s               # 제안 30
+---
+float32 rssi_median
+float32 rssi_iqr
+uint16  n_samples
+---
+uint16 elapsed_s
