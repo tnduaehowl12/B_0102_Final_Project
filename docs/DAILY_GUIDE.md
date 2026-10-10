@@ -92,7 +92,7 @@ blocked: false
 ---
 ## 오늘 한 일
 - RPi에서 iw scan으로 핫스팟 RSSI 읽기 확인
-- rssi_scanner 노드: /robot1/survey/raw 1 Hz 발행
+- rssi_scanner 노드: /robot4/survey/raw 1 Hz 발행
 
 ## 시행착오
 - 전체 채널 스캔은 3초 걸림 → 핫스팟 채널만 스캔해서 1초 안쪽으로

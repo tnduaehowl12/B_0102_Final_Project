@@ -3,5 +3,5 @@
 int16 RSSI_NOT_DETECTED=-100
 
 builtin_interfaces/Time stamp   # 측정 시각
-string  robot_id                # robot1, robot2
+string  robot_id                # robot4, robot3
 int16   rssi_dbm                # 핫스팟 미검출이면 RSSI_NOT_DETECTED

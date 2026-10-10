@@ -3,12 +3,14 @@
 2026-10-10 · 작성 도윤 (PM) · **팀 검토 전 초안입니다. 피드백을 받아 고칩니다.**
 
 v0.2: 회차 전달·근거 사진·후보 발견 로봇·재개/재배정·각도 rad·scv_survey 패키지
+v0.2.1: 로봇 이름공간 `/robot4`·`/robot3`, 모든 기기 turtle08, 빌드 전 가상환경 끄기, 자세 보정 "뒤로" 처리 제안
 
 팀 사이에 오가는 토픽·서비스·액션과 그 타입을 한곳에 모았습니다. 타입 정의는 `ros2_ws/src/scv_msgs/` 에 있습니다. 고칠 것이 있으면 그 약속의 **주인**에게 말하고, 주인이 `scv_msgs` 와 이 문서를 함께 고칩니다.
 
 ## 이름 규칙
 
-- `{ns}` 는 로봇 이름공간입니다: `/robot1`, `/robot2`. `robot_id` 필드에는 앞의 `/` 없이 `robot1`, `robot2` 를 씁니다.
+- `{ns}` 는 로봇 이름공간입니다: 로봇 A = 4번 `/robot4`, 로봇 B = 3번 `/robot3`. `robot_id` 필드에는 앞의 `/` 없이 `robot4`, `robot3` 을 씁니다.
+- 코드에 로봇 번호를 직접 쓰지 않습니다. 노드는 이름공간을 launch 인자(`robot_ns`)로 받아, 로봇이 바뀌어도 launch만 고치면 되게 합니다.
 - 좌표는 저장 지도(`map`) 기준이고 단위는 m, 각도는 rad 입니다.
 - `/inspection/...` 은 로봇과 무관한 관제 PC 쪽 이름입니다.
 
@@ -24,6 +26,8 @@ v0.2: 회차 전달·근거 사진·후보 발견 로봇·재개/재배정·각�
 | `scv_monitor` | 관제 PC | `ros_bridge`, 관제 웹, `webcam_node` | 관제·작업 관리 (B) |
 | `scv_bringup` | 5대 전부 | launch, params, 지도, `facilities.yaml` | PM |
 | `scv_testbed` | PC | 가짜 데이터 도구, 시험 스크립트 | PM |
+
+5대 = 로봇 RPi 2대(4번·3번) · 로봇 PC 2대(MSI GPU) · 관제 PC 1대(Victus). **모두 turtle08**에 붙습니다. Discovery Server는 RPi 4번 · RPi 3번 · 관제 PC 세 곳이고, 로봇 PC는 자기 로봇 RPi 서버의 클라이언트입니다.
 
 ## 인터페이스
 
@@ -85,10 +89,12 @@ IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 
 | 네트워크 후보의 `robot_id` | 두 로봇 병합 칸이면 그 칸의 가장 최근 샘플을 잰 로봇 (제안) | RSSI B · 관제 A |
 | `Reassign` 형식 | 보낼 로봇 · 받을 로봇(비우면 manager) → 옮긴 작업 수 | 관제 A |
 | `resent` | sync 요청으로 다시 보낸 샘플만 true | RSSI A · 관제 B |
+| 자세 보정 "뒤로" (`adjust_forward_m` < 0) | 로봇이 후진 명령을 무시한 적이 있고 후진은 지양. mission_executor는 보정값을 cmd_vel로 보내지 않고 **Nav2 목표 위치로 바꿔** 보낸다 (뒤 지점이면 돌아서 갔다가 방향을 다시 맞춤). Nav2 행동 트리의 BackUp 복구 동작은 뺀다. 설비 관측 위치는 1.0–1.2 m로 등록해 뒤로 물러날 일을 줄인다 (OAK-D depth는 약 0.7 m부터 유효) (제안) | 비전 B · 주행 |
 
 ## 빌드
 
 ```bash
+deactivate 2>/dev/null   # 가상환경이 켜져 있으면 끄고 빌드
 cd ros2_ws
 colcon build --symlink-install
 source install/setup.bash
@@ -97,3 +103,5 @@ ros2 interface list | grep scv_msgs
 ```
 
 `scv_msgs` 를 고치면 그것을 쓰는 패키지도 다시 빌드해야 합니다.
+
+가상환경(venv)이 켜진 채 빌드하면 `scv_msgs` 가 `ModuleNotFoundError: No module named 'em'` 으로 실패합니다. cmake 가 가상환경의 python 을 잡아서, 메시지 코드 생성에 필요한 도구(empy 등)를 못 찾기 때문입니다. `deactivate` 로 끄고 새 터미널에서 빌드하세요.
