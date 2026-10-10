@@ -1,0 +1,4 @@
+강의 자료의 day5 : Multi Robot Client Setup 그대로 수행
+관제용 pc 를 discovery server 0 로 설정 후
+나머지 pc 및 로봇을 클라이언트로 설정.
+이때 로봇의 자체 discovery server 는 그대로 on 인 상태(터틀봇 내부에서 사용되는 서버)
