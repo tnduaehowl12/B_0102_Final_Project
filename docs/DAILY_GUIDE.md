@@ -8,7 +8,9 @@
 
 저장소 맨 위 폴더(`B_0102_Final_Project`)에서, **우리 팀 브랜치**에 있는지 먼저 확인하고 시작해요 (`git switch feature/<팀>` — 팀 브랜치 이름은 README 의 「브랜치」 표).
 
-1. **만들기** — 오늘 md와 `img/`·`video/` 폴더가 자동으로 생겨요. 처음 한 번만 GitHub 아이디를 물어봐요.
+1. **만들기** — 할 일이 없어요. 10/16까지의 일지 파일(`docs/daily/<내 GitHub 아이디>/날짜.md`)과 `img/`·`video/` 폴더를 PM이 미리 만들어 두었어요. `git pull` 한 번 하고 **오늘 날짜 파일을 열어** 쓰면 됩니다. 아무것도 안 쓴 파일은 허브가 미제출로 봐요.
+
+   파일이 없는 날(10/10, 10/17 이후)이나 폴더가 안 보일 때만:
 
    ```bash
    scripts/daily.sh
@@ -20,6 +22,8 @@
    scripts/daily.sh done
    git push
    ```
+
+   `done` 이 처음에 GitHub 아이디를 물으면 내 일지 폴더 이름과 같은 값을 넣어요. 검사 없이 `git add docs/daily && git commit -m "daily: 날짜" && git push` 로 올려도 됩니다.
 
 ## 폴더·파일 위치
 

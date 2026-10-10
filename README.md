@@ -2,21 +2,22 @@
 
 ## 브랜치
 
-팀마다 브랜치 하나를 씁니다. 팀 브랜치에는 **그 팀이 쓰는 패키지와 공통 메시지(`scv_msgs`)만** 들어 있습니다. `main` 은 모든 패키지가 들어 있는 통합본입니다.
+팀마다 브랜치 하나를 씁니다. **모든 브랜치에 패키지 전체가 들어 있고**(`main` 과 같은 구조), 팀은 자기 패키지만 고칩니다. `main` 은 통합본입니다.
 
-| 팀 | 브랜치 | 들어 있는 패키지 |
+| 팀 | 브랜치 | 이 팀이 고치는 패키지 |
 | --- | --- | --- |
-| 비전·물리 인프라 | `feature/vision` | `scv_detection`, `scv_msgs` |
-| 주행·작업 실행 | `feature/driving` | `scv_nav`, `scv_msgs` |
-| 관제·작업 관리 | `feature/control` | `scv_manager`, `scv_monitor`, `scv_msgs` |
-| 통신 인프라·RSSI | `feature/survey` | `scv_survey`, `scv_msgs` |
-| PM + 통합 | `feature/pm` | `scv_bringup`, `scv_testbed`, `scv_msgs` |
-| 통합본 | `main` | 전부 |
+| 비전·물리 인프라 | `feature/vision` | `scv_detection` |
+| 주행·작업 실행 | `feature/driving` | `scv_nav` |
+| 관제·작업 관리 | `feature/control` | `scv_manager`, `scv_monitor` |
+| 통신 인프라·RSSI | `feature/survey` | `scv_survey` |
+| PM + 통합 | `feature/pm` | `scv_bringup`, `scv_testbed`, `scv_msgs`, 여러 팀이 보는 문서 |
+| 통합본 | `main` | (PM 이 팀 브랜치를 합침) |
 
 - 자기 팀 브랜치에서만 커밋합니다. `main` 에는 PM 이 통합합니다.
 - 로봇 PC·관제 PC·RPi 는 `main` 으로 돌립니다 (통합 시험도 `main`).
 - 처음 한 번: `git config pull.rebase false`
-- **팀 브랜치에 `main` 을 merge 하지 않습니다** (다른 팀 패키지가 다시 들어옵니다). `scv_msgs` 나 문서가 바뀌면 PM 이 팀 브랜치에 맞춰 넣고, 팀원은 `git pull` 만 하면 됩니다.
+- 다른 팀 패키지와 `scv_msgs`, 여러 팀이 보는 문서(`README.md`, `docs/interfaces.md`, `docs/DAILY_GUIDE.md`)는 팀 브랜치에서 고치지 않습니다. 고칠 것이 있으면 그 팀이나 PM 에게 말합니다.
+- `main` 이 바뀌면 PM 이 팀 브랜치에 합쳐 넣습니다. 팀원은 `git pull` 만 하면 됩니다.
 
 ## 폴더 구조
 
