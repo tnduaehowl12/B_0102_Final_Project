@@ -76,7 +76,10 @@ def main():
     spin = threading.Thread(target=rclpy.spin, args=(node,))
     spin.start()
     try:
+        t0 = time.time()
         while node.pose is None:
+            if time.time() - t0 > 5.0:
+                node.get_logger().warn('odom 수신 없음 — 네임스페이스·Discovery·로봇 전원 확인 (계속 기다림)', once=True)
             time.sleep(0.1)
         input('로봇을 시작 테이프에 맞추고 Enter (Ctrl+C로 정지)')
         if node.mode == 'rotate':
