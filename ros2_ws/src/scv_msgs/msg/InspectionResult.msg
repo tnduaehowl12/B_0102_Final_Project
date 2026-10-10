@@ -19,5 +19,6 @@ string  facility_id             # facilities.yaml
 uint8   kind
 uint8   verdict
 string  detail
-string  image_ref               # 로봇 PC 에 저장한 사진
+string  image_ref               # 로봇 PC 에 저장한 원본 사진 경로
+sensor_msgs/CompressedImage image  # 근거 사진 축소본 (JPEG, 긴 변 640 px 이하) → 관제 웹·DB. 사진이 없으면 data 가 빔
 uint8   attempts                # 관측 횟수 1–3

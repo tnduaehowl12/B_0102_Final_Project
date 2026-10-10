@@ -3,7 +3,7 @@
 <package format="3">
   <name>scv_nav</name>
   <version>0.1.0</version>
-  <description>로봇 PC: mission_executor(+status), survey_buffer, Nav2 설정</description>
+  <description>로봇 PC: mission_executor(+status), Nav2 설정</description>
   <maintainer email="tnduaehowl37@gmail.com">doyoon-kim</maintainer>
   <license>TODO: License declaration</license>
 

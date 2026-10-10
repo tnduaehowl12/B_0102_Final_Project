@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'scv_robot'
+package_name = 'scv_survey'
 
 setup(
     name=package_name,
@@ -14,7 +14,7 @@ setup(
     zip_safe=True,
     maintainer='doyoon-kim',
     maintainer_email='tnduaehowl37@gmail.com',
-    description='로봇 RPi: rssi_scanner (+정밀 측정 액션)',
+    description='RSSI 측정·지도: rssi_scanner(RPi) · survey_buffer(로봇 PC) · network_map_engine(관제 PC)',
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [

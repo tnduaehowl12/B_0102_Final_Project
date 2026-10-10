@@ -8,6 +8,6 @@ string detail
 string image_ref
 ---
 uint8   attempt                 # 1–3
-float32 adjust_yaw_deg          # 자세 보정 요청 (0 이면 없음)
-float32 adjust_forward_m
+float32 adjust_yaw              # 자세 보정 요청 [rad] (0 이면 없음)
+float32 adjust_forward_m        # 앞(+)·뒤(−) [m]
 string  note

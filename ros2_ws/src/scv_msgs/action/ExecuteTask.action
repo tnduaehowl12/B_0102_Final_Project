@@ -5,6 +5,7 @@ uint8 REINSPECTION=2
 uint8 DOCK=3
 
 string task_id
+uint32 run_id                   # 순찰 회차. survey_buffer 가 NetSample.run_id 로 쓴다
 uint8  type
 uint8  priority
 geometry_msgs/PoseStamped[] waypoints

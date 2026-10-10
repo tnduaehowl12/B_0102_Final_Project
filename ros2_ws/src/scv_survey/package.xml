@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>scv_robot</name>
+  <name>scv_survey</name>
   <version>0.1.0</version>
-  <description>로봇 RPi: rssi_scanner (+정밀 측정 액션)</description>
+  <description>RSSI 측정·지도: rssi_scanner(RPi) · survey_buffer(로봇 PC) · network_map_engine(관제 PC)</description>
   <maintainer email="tnduaehowl37@gmail.com">doyoon-kim</maintainer>
   <license>TODO: License declaration</license>
 

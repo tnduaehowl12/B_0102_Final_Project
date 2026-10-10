@@ -14,7 +14,7 @@ setup(
     zip_safe=True,
     maintainer='doyoon-kim',
     maintainer_email='tnduaehowl37@gmail.com',
-    description='로봇 PC: mission_executor(+status), survey_buffer, Nav2 설정',
+    description='로봇 PC: mission_executor(+status), Nav2 설정',
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [

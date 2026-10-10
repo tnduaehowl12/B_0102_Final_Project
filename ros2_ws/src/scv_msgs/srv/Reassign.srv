@@ -1,0 +1,8 @@
+# IF-16 /inspection/reassign · 관제 웹 → inspection_manager (관제 PC 안)
+# from_robot_id 의 남은 작업을 다른 로봇으로 넘긴다 (수동 재배정, E3 자동 재배정과 같은 처리).
+string from_robot_id            # robot1, robot2
+string to_robot_id              # 빈 문자열이면 manager 가 고름
+---
+bool   ok
+string message
+uint16 moved_tasks

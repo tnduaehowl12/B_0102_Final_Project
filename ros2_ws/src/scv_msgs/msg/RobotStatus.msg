@@ -13,6 +13,7 @@ uint8   state
 float32 battery_percent         # 0–100
 bool    accepting_tasks         # 배터리 30% 이하이면 false (E2)
 string  task_id                 # 수행 중인 작업, 없으면 빈 문자열
+uint32  run_id                  # 마지막으로 받은 작업의 회차, 아직 없으면 0 (survey_buffer 가 읽음)
 uint8   task_type               # ExecuteTask.Goal 의 type 상수
 float32 progress                # 0.0–1.0
 float32 x                       # map 좌표 [m]

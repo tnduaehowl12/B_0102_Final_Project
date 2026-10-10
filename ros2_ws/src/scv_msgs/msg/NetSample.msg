@@ -8,5 +8,5 @@ float32 x                       # map 좌표 [m]
 float32 y
 float32 yaw                     # [rad]
 bool    pose_ok                 # false 면 위치 불확실 → 지도 계산에서 제외 (E5)
-bool    connected               # 발행 시점에 관제 PC 와 연결돼 있었는지
+bool    resent                  # survey/sync 요청으로 다시 보낸 샘플이면 true
 int16   rssi_dbm                # 핫스팟 RSSI (미검출 NetRaw.RSSI_NOT_DETECTED)
