@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 package_name = 'scv_survey'
@@ -9,6 +11,9 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+        ('share/' + package_name + '/rviz', glob('rviz/*.rviz')),
+        ('share/' + package_name + '/maps', glob('maps/*.yaml') + glob('maps/*.pgm')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -18,6 +23,9 @@ setup(
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
+            'rssi_scanner = scv_survey.rssi_scanner:main',
+            'manual_tagger = scv_survey.manual_tagger:main',
+            'network_map_engine = scv_survey.network_map_engine:main',
         ],
     },
 )
