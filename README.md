@@ -14,6 +14,8 @@
 | 통합본 | `main` | 전부 |
 
 - 자기 팀 브랜치에서만 커밋합니다. `main` 에는 PM 이 통합합니다.
+- 로봇 PC·관제 PC·RPi 는 `main` 으로 돌립니다 (통합 시험도 `main`).
+- 처음 한 번: `git config pull.rebase false`
 - **팀 브랜치에 `main` 을 merge 하지 않습니다** (다른 팀 패키지가 다시 들어옵니다). `scv_msgs` 나 문서가 바뀌면 PM 이 팀 브랜치에 맞춰 넣고, 팀원은 `git pull` 만 하면 됩니다.
 
 ## 폴더 구조
