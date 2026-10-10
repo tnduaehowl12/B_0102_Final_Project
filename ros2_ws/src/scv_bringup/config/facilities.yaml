@@ -1,0 +1,15 @@
+# 설비 등록 (SR-19) — 형식 초안. 아래 값은 예시이고, 테스트베드에서 잰 값으로 바꾼다.
+# 좌표는 저장 지도(map) 기준 [m], 각도 [rad]. kind 는 scv_msgs/InspectionResult 의 KIND_* 와 같다.
+facilities:
+  - id: EXT-01
+    kind: extinguisher        # 소화기 (유무·위치·압력계)
+    expected: {x: 0.0, y: 0.0}          # 설비가 있어야 할 위치
+    view: {x: 0.0, y: 0.0, yaw: 0.0}    # 로봇이 서서 볼 자세 (설비에서 1.0–1.2 m, depth 는 약 0.7 m 부터 유효)
+  - id: SHT-01
+    kind: shutter             # 방화셔터 하강구간
+    band: [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]   # 하강 띠의 네 꼭짓점
+    view: {x: 0.0, y: 0.0, yaw: 0.0}
+  - id: EXL-01
+    kind: exit_light          # 비상구 유도등
+    expected: {x: 0.0, y: 0.0}
+    view: {x: 0.0, y: 0.0, yaw: 0.0}

@@ -97,7 +97,7 @@ IF 번호는 시스템 다이어그램과 같습니다 (IF-03·13 은 삭제된 
 
 ## 설정 파일 (형식 초안)
 
-`ros2_ws/src/scv_bringup/config/` 에 있습니다 (`main` 과 `feature/pm`). 팀 브랜치에는 `scv_bringup` 이 없으니 형식은 여기서 봅니다. 값은 테스트베드에서 잰 뒤 PM 이 채웁니다. 좌표는 저장 지도(`map`) 기준 [m], 각도 [rad].
+`ros2_ws/src/scv_bringup/config/` 에 있습니다. 값은 테스트베드에서 잰 뒤 PM 이 채웁니다. 좌표는 저장 지도(`map`) 기준 [m], 각도 [rad].
 
 ```yaml
 # facilities.yaml — 설비 등록. kind 는 InspectionResult 의 KIND_* 와 같다
