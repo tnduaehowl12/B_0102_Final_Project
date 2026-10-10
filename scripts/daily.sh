@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# 오늘 일지 준비 / 커밋 (COOP Hub v1.13)
+# 오늘 일지 준비 / 커밋 (COOP Hub v1.15)
 #   scripts/daily.sh [YYYY-MM-DD]        그날(기본 오늘) md + img/ + video/ 를 (없으면) 만든다
 #   scripts/daily.sh done [YYYY-MM-DD]   크기·토큰 검사 뒤 docs/daily/<아이디>/ 만 커밋한다 (push는 직접)
 #   scripts/daily.sh id <아이디>          GitHub 아이디를 바꾼다
 #   --yes (또는 DAILY_YES=1)             묻지 않고 진행 (AI가 대신 돌릴 때). main 브랜치 경고도 넘어간다
+#   v1.15: PM이 scripts/daily_prefill.sh 로 미리 만든 양식이 있으면 그 파일을 그대로 쓴다 (새로 만들지 않음).
+#          양식 그대로(date:/work: 말고 바뀐 것 없음)면 done 이 커밋하지 않고 멈춘다.
 set -euo pipefail
 YES="${DAILY_YES:-0}"
 ARGS=()
@@ -16,6 +18,25 @@ cd "$(git rev-parse --show-toplevel)"
 DAY="$(TZ=Asia/Seoul date +%F)"
 LIMIT_MB=5        # 노션에 바로 올라가는 크기
 HARD_MB=50        # 이보다 크면 커밋하지 않는다
+
+# 머리말의 date:/work: 줄, 빈 줄, 줄 끝 공백·CR 을 뺀 내용 (허브의 "양식만 있음" 판단과 같은 규칙)
+skeleton() {
+  awk '{ sub(/\r$/, ""); sub(/[ \t]+$/, "") }
+       NR == 1 && $0 ~ /^[ \t]*---$/ { fm = 1; print; next }
+       fm && $0 ~ /^[ \t]*---$/ { fm = 0; print; next }
+       fm && tolower($0) ~ /^[ \t]*(date|work)[ \t]*:/ { next }
+       $0 ~ /^[ \t]*$/ { next }
+       { print }' "$1"
+}
+is_blank() {   # $1 이 양식 그대로인가 (지금 양식, 또는 그 파일을 만든 커밋 때의 양식)
+  local f="$1" t sk
+  [ -f docs/daily/_template.md ] || return 1
+  sk="$(skeleton "$f")"
+  [ "$sk" = "$(skeleton docs/daily/_template.md)" ] && return 0
+  t="$(mktemp)"
+  if git show "HEAD:docs/daily/_template.md" > "$t" 2>/dev/null && [ "$sk" = "$(skeleton "$t")" ]; then rm -f "$t"; return 0; fi
+  rm -f "$t"; return 1
+}
 
 valid_id() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; }
 valid_day() { [[ "$1" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]$ ]]; }
@@ -69,6 +90,9 @@ if [ "$MODE" = "done" ]; then
     else echo "  묻지 않고 멈췄어요. 내 브랜치로 옮기거나(git switch <내 브랜치>), 정말 여기면 --yes 를 붙이세요."; exit 1
     fi ;;
   esac
+  if is_blank "$FILE"; then
+    echo "✖ $FILE 은 아직 양식 그대로예요 (양식에서 date:·work: 말고 바뀐 것이 없음). 오늘 한 일 등을 채운 뒤 다시 scripts/daily.sh done"; exit 1
+  fi
   big=0
   while IFS= read -r -d '' f; do
     [ -f "$f" ] || continue
@@ -93,11 +117,21 @@ if [ "$MODE" = "done" ]; then
   exit 0
 fi
 
+up="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+if [ ! -f "$FILE" ] && [ -n "$up" ] && git cat-file -e "$up:$FILE" 2>/dev/null; then
+  echo "PM이 만든 양식($FILE)이 $up 에 있어요. 새로 만들지 않았어요 — 먼저 git pull 하면 그 파일이 와요."
+  exit 0
+fi
 mkdir -p "$DIR/img" "$DIR/video"
-[ -e "$DIR/img/.gitkeep" ] || : > "$DIR/img/.gitkeep"
-[ -e "$DIR/video/.gitkeep" ] || : > "$DIR/video/.gitkeep"
+for d in "$DIR/img" "$DIR/video"; do   # PM이 만든 .keep 이 있으면 .gitkeep 을 또 만들지 않는다
+  [ -e "$d/.keep" ] || [ -e "$d/.gitkeep" ] || : > "$d/.gitkeep"
+done
 if [ -f "$FILE" ]; then
-  echo "오늘 일지가 이미 있어요: $FILE"
+  if is_blank "$FILE"; then
+    echo "PM이 미리 만든 양식이 있어요: $FILE — 이 파일에 이어서 쓰면 돼요."
+  else
+    echo "오늘 일지가 이미 있어요: $FILE — 이어서 쓰면 돼요."
+  fi
 else
   sed "s/^date: YYYY-MM-DD/date: $DAY/" docs/daily/_template.md > "$FILE"
   echo "만들었어요: $FILE"
