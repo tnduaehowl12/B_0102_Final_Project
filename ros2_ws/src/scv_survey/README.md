@@ -1,8 +1,8 @@
 # scv_survey — RSSI 측정·히트맵 (노트북 단위시험판)
 
-2026-10-10 · 통신 인프라·RSSI 팀
+2026-10-11 · 통신 인프라·RSSI 팀
 
-노트북으로 핫스팟(turtle08) RSSI 를 재서, 잰 위치의 0.5 m 칸을 신호 세기 색으로 RViz 지도 위에 칠한다.
+노트북으로 핫스팟(예: `csh의 iPhone`) RSSI 를 재서, 잰 위치의 0.5 m 칸을 신호 세기 색으로 RViz 지도 위에 칠한다.
 위치는 두 가지 중 하나로 얻는다.
 
 | 모드 | 위치 | 쓰는 때 |
@@ -15,7 +15,7 @@
 ## 전체 흐름
 
 ```text
- iw dev wlo1 link ──▶ rssi_scanner ──IF-02 {ns}/survey/raw (NetRaw, 1 Hz)──▶ manual_tagger
+ iw dev wlo1 scan ──▶ rssi_scanner ──IF-02 {ns}/survey/raw (NetRaw, 1 Hz)──▶ manual_tagger
                                                                              │  위치를 붙인다
                        manual: /clicked_point, /initialpose (RViz 클릭) ────▶│
                        tf:     {ns}/tf, {ns}/tf_static, {ns}/amcl_pose ─────▶│
@@ -49,12 +49,35 @@ scv_survey/
 
 ### `iw_reader.py` — iw 로 RSSI 읽기
 
-- `read_iw_link(iface, target_ssid)`: `iw dev <iface> link` 를 실행해 `SSID` 와 `signal: -41 dBm` 을 꺼낸다.
-  - 스캔(`iw scan`)이 아니라 **접속 중인 링크 정보**만 읽는다 → root 불필요, 통신이 끊기지 않음, 한 번에 2–3 ms.
-- 판정:
-  - `detected=True`: 지금 붙어 있는 SSID 가 `target_ssid` 이고 signal 이 있을 때
-  - `detected=False`: `Not connected.` / 다른 SSID / signal 줄 없음 / iw 실행 실패
-- `iw_available()`: iw 설치 여부. 없으면 `rssi_scanner` 가 `sudo apt install iw` 안내 후 종료.
+두 가지 방식이 있다. 기본은 **scan**.
+
+| | scan (기본) | link (예전 방식) |
+| --- | --- | --- |
+| 명령 | `iw dev <iface> scan [freq <MHz>]` | `iw dev <iface> link` |
+| 재는 것 | 주변 AP 중 `target_ssid` (노트북은 turtle08 에 붙은 채로 **듣기만**) | 노트북이 지금 붙어 있는 AP 하나 |
+| 권한 | CAP_NET_ADMIN 필요 (아래 「스캔 권한」) | 불필요 |
+| 시간 | 한 채널 약 0.06 s (2.4 GHz 0.15 s), 전체 대역 3.5–5.4 s | 2–3 ms |
+
+scan 방식 함수:
+
+| 함수·클래스 | 하는 일 |
+| --- | --- |
+| `run_iw_scan(iface, freqs)` | iw scan 한 번. 실패(권한, `Device or resource busy`, 시간 초과)면 `ok=False` 와 이유 |
+| `parse_iw_scan(text)` | BSS 블록마다 BSSID, SSID, freq, signal(소수), `last seen` (boottime·ms ago), 접속 여부 |
+| `decode_iw_ssid(text)` | iw 가 `\xNN` 으로 쓴 바이트를 UTF-8 로 (`csh\xec\x9d\x98 iPhone` → `csh의 iPhone`) |
+| `fresh_bss(bss, start, dur)` | **이번 스캔에서 들은 것만**. iw 는 커널 캐시(약 30 s)에 남은 AP 도 같이 출력하므로 `last seen` 이 스캔 시작보다 이전이면 버린다. 안 거르면 핫스팟을 꺼도 마지막 값이 30 초 동안 "검출"로 나온다 |
+| `match_ssid(bss, ssid, pattern)` | ssid 정확히 같은 것 / pattern 이 들어간 것 (대소문자 무시), 센 순서 |
+| `HotspotTracker` | 스캔할 채널 결정 + 대상 고르기 (아래) |
+
+`HotspotTracker` 동작:
+1. 대상 채널을 모르면 **전체 대역 스캔**, 찾으면 그 채널로 고정하고 이후 **그 채널만** 스캔.
+2. `target_ssid` 를 비우면 SSID 에 `ssid_pattern`(`iPhone`) 이 들어간 AP 중 **처음 가장 센 것의 SSID 로 고정**. 고정 뒤엔 다른 iPhone 이 더 세져도 바꾸지 않는다.
+3. `rescan_after_miss`(3) 번 연속 미검출이면 바로 한 번, 그 뒤 `full_scan_interval`(10 s) 마다 전체 대역 스캔을 섞어 채널을 다시 찾는다 (핫스팟을 껐다 켜면 채널이 바뀔 수 있다). 그 사이에도 1 Hz 로 원래 채널을 재며 미검출을 보낸다.
+4. 같은 SSID 가 여러 BSSID 면 가장 센 것.
+
+link 방식: `parse_iw_link`·`read_iw_link`. `target_ssid` 를 비우면 붙어 있는 AP 아무거나.
+
+`iw_available()`: iw 설치 여부. 없으면 `rssi_scanner` 가 `sudo apt install iw` 안내 후 종료.
 
 ### `heatmap.py` — 칸·색·위치 판정 (ROS 무관)
 
@@ -73,17 +96,39 @@ scv_survey/
 
 ### `rssi_scanner.py` — 노드: RSSI 측정 (IF-02)
 
-- `rate_hz`(1 Hz) 마다 `read_iw_link` 를 호출해 `survey/raw` (`scv_msgs/NetRaw`) 로 보낸다.
-  - `stamp` = 측정 시각, `robot_id`, `detected`, `rssi_dbm` (미검출이면 0, 쓰지 않음)
+- `rate_hz`(1 Hz) 마다 스캔해서 `survey/raw` (`scv_msgs/NetRaw`) 로 보낸다. 메시지 형식은 그대로 (IF-02 변경 없음).
+  - `stamp` = **실제로 들은 시각** (iw 가 끝난 시각 − `last seen`). 전체 대역 스캔은 수 초 걸려서 끝난 시각을 쓰면 움직이는 로봇 위치가 어긋난다.
+  - `detected`, `rssi_dbm` (signal 반올림, 미검출이면 0, 쓰지 않음)
+- 한 채널 스캔은 AP 가 있어도 4 번에 1 번꼴로 못 듣는다 (probe 응답 누락, 실측). 못 들으면 같은 채널을 `scan_retries`(2) 번까지 다시 스캔한다.
+- **스캔이 실패하면 NetRaw 를 보내지 않는다** (경고만). 미검출로 보내면 멀쩡한 칸이 회색이 된다. 권한 오류면 `setcap` 안내 후 측정을 멈춘다.
+- 실행 중 대상 바꾸기: `ros2 param set /<ns>/rssi_scanner target_ssid "csh의 iPhone"` (다음 측정부터, 채널을 다시 찾는다).
 - QoS: reliable · transient_local · KEEP_LAST 600 (IF-02).
-- 미검출이 이어지면 5 초에 한 번 "미검출 (지금 SSID: …)" 경고.
+
+로그:
+
+| 언제 | 예 |
+| --- | --- |
+| 시작 | `측정 시작: iw dev wlo1 scan, 대상 'csh의 iPhone' (직접 입력), 1.0 Hz, robot_id=robot3` |
+| 측정마다 (`log_samples`) | `[#  12] 'csh의 iPhone'  -45 dBm  (ch149 5745 MHz · 3a:a3:… · 5745 MHz 스캔 61 ms · 20 ms 전 수신)` |
+| 미검출 (경고) | `[#  13] 'csh의 iPhone' 미검출 (연속 2 회)  (5745 MHz 스캔 190 ms)` |
+| 상태 바뀜 | `채널 고정: 5745 MHz`, `3 회 연속 미검출 → 10 s 마다 전체 대역 스캔으로 채널 재탐색`, `채널 바뀜: 5745 → 2437 MHz`, `다시 검출`, `자동 선택: … 'csh의 iPhone' 로 고정`, `대상 SSID 변경` |
+| 전체 스캔 뒤 | `주변 'iPhone' AP 2 개: 'csh의 iPhone' -41 dBm 5745 MHz, 'iPhone' -54 dBm 5745 MHz` |
+| `status_period` 마다 | `[상태] 대상 'csh의 iPhone' · 5745 MHz · 최근 측정 10 (검출 9 / 미검출 1 / 실패 0) · 중앙값 -45 dBm (최소 -50, 최대 -41) · 스캔 평균 83 ms · 재스캔 2 · 누적 발행 120` |
+| 스캔 실패 (경고) | `스캔 실패 (5745 MHz, 12 ms): command failed: Device or resource busy (-16) — 이번 측정은 보내지 않음` |
 
 | 파라미터 | 기본값 | 설명 |
 | --- | --- | --- |
 | `iface` | `wlo1` | 무선 인터페이스 (RPi 는 `wlan0`) |
-| `target_ssid` | `turtle08` | 측정할 핫스팟 |
+| `method` | `scan` | `scan` / `link` |
+| `target_ssid` | (비움) | 측정할 SSID. 비우면 `ssid_pattern` 으로 자동 선택 |
+| `ssid_pattern` | `iPhone` | 자동 선택에 쓸 글자 |
 | `robot_id` | `laptop` | launch 가 이름공간으로 채움 |
-| `rate_hz` | 1.0 | 측정 주기 |
+| `rate_hz` | 1.0 | 측정 주기 (스캔이 길면 그만큼 늦어짐) |
+| `scan_retries` | 2 | 한 채널 스캔에서 못 들으면 다시 스캔하는 횟수 |
+| `rescan_after_miss` | 3 | 이 횟수 연속 미검출이면 채널 재탐색 시작 |
+| `full_scan_interval` | 10.0 s | 재탐색 중 전체 대역 스캔 간격 |
+| `log_samples` | true | 측정마다 한 줄 로그 |
+| `status_period` | 10.0 s | 상태 요약 간격 (0 이면 끔) |
 
 ### `manual_tagger.py` — 노드(시험용): 위치 붙이기 (IF-02 → IF-08)
 
@@ -149,7 +194,9 @@ scv_survey/
 | `pose_source` | `manual` | `manual` / `tf` |
 | `robot_ns` | (비움) | 비우면 manual=`laptop`, tf=`robot4`. 로봇 3번은 `robot3` |
 | `map` | `maps/test_map.yaml` | manual 에서만 (tf 는 localization 이 지도를 냄) |
-| `iface`, `ssid` | `wlo1`, `turtle08` | |
+| `iface` | `wlo1` | |
+| `ssid` | (비움) | 측정할 SSID. 한글·공백은 `ssid:="csh의 iPhone"` 처럼 따옴표. 비우면 `ssid_pattern` 자동 선택 |
+| `method`, `ssid_pattern`, `rate_hz`, `scan_retries`, `rescan_after_miss`, `full_scan_interval`, `log_samples`, `status_period` | scan, iPhone, 1.0, 2, 3, 10.0, true, 10.0 | `rssi_scanner` 로 그대로 |
 | `init_x`, `init_y`, `samples_per_point` | 0, 0, 5 | manual |
 | `base_frame`, `max_pose_age` | `base_link`, 0.5 | tf |
 | `cell_size`, `rssi_strong`, `rssi_weak` | 0.5, −35, −75 | |
@@ -200,10 +247,21 @@ cd src/scv_survey && /usr/bin/python3 -m pytest test -q
 
 venv 의 pytest 9 는 ROS 의 `launch_testing` 플러그인과 맞지 않아 시스템 python(`/usr/bin/python3`)으로 돌린다.
 
+**스캔 권한** (기기마다 한 번, iw 패키지를 업데이트하면 다시):
+
+```bash
+sudo setcap cap_net_admin+ep /usr/sbin/iw
+getcap /usr/sbin/iw          # /usr/sbin/iw cap_net_admin=ep 이면 됨
+```
+
+되돌리기 `sudo setcap -r /usr/sbin/iw`. 이 기기의 모든 사용자가 iw 로 무선 설정을 바꿀 수 있게 되는 점은 알고 쓴다.
+
+**아이폰 핫스팟**: 측정하는 동안 「개인용 핫스팟」 화면을 켜 두거나 다른 기기를 하나 붙여 둔다 (연결된 기기가 없으면 비콘을 멈추는 것으로 알려짐). 「호환성 최대화」 켬 = 2.4 GHz, 끔 = 5 GHz — 시험마다 한쪽으로 정해 기록한다.
+
 **노트북만 (manual)**
 
 ```bash
-ros2 launch scv_survey laptop_test.launch.py
+ros2 launch scv_survey laptop_test.launch.py ssid:="csh의 iPhone"
 ```
 
 노트북을 옮기고 → RViz Publish Point 로 그 자리 클릭 → 5 초 대기 → 다음 자리.
@@ -214,7 +272,7 @@ ros2 launch scv_survey laptop_test.launch.py
 | --- | --- | --- |
 | 1 | 확인 | `ros2 topic list \| grep robot3` · `ros2 topic info /robot3/cmd_vel` (TwistStamped 확인) |
 | 2 | 위치 추정 | `ros2 launch turtlebot4_navigation localization.launch.py namespace:=/robot3 map:=<install>/share/scv_survey/maps/test_map.yaml` |
-| 3 | 측정+RViz | `ros2 launch scv_survey laptop_test.launch.py pose_source:=tf robot_ns:=robot3 csv_path:=~/scv_survey_logs/<이름>.csv` |
+| 3 | 측정+RViz | `ros2 launch scv_survey laptop_test.launch.py pose_source:=tf robot_ns:=robot3 ssid:="csh의 iPhone" csv_path:=~/scv_survey_logs/<이름>.csv` |
 | 4 | 초기위치 | RViz 2D Pose Estimate — **undock 위치 = 지도 원점 (0, 0), 방향 −x (yaw π)** |
 | 5 | TF 확인 | `ros2 run tf2_ros tf2_echo map base_link --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static` |
 | 6 | 샘플 확인 | `ros2 topic echo /robot3/survey/sample` |
@@ -236,7 +294,19 @@ ros2 launch scv_survey laptop_test.launch.py
 | 지도 표시 | 가짜 로봇 TF | RViz 칸 13 개 = CSV 로 다시 계산한 값 |
 | **실제 teleop** | **로봇 3번** | 지도에 쓴 샘플 131 개, 칸 8 개, RSSI −46 ~ −35 dBm (칸 중앙값 −44 ~ −40), 미검출 0. TF 지연 0.02–0.07 s. 마지막 위치 TF·샘플·로그 모두 (−2.53, −1.99) 로 일치. 기록 `~/scv_survey_logs/robot3_teleop_01.csv` |
 
-실제 시험에서 확인된 것:
+## 시험 결과 (2026-10-11, scan 방식)
+
+| 시험 | 환경 | 결과 |
+| --- | --- | --- |
+| pytest | mock | 48 개 통과 (iw link 6, iw scan·SSID·추적 12, 색·칸·통계·중복·위치 판정 30) |
+| 스캔 시간 | 노트북 iwlwifi | 전체 대역 3.5–5.4 s (AP 약 50 개), 한 채널 5 GHz 50–70 ms, 2.4 GHz 140–155 ms. `duration` (dwell) 은 이 칩에서 안 먹음 |
+| 한 채널 검출률 | turtle09 (−45~−53 dBm) | 한 번 스캔 50–85 % (probe 응답 누락). 재스캔 2 회 넣고 노드로 40 회 중 40 회 검출 |
+| 캐시 | 노트북 | 한 채널 스캔에도 iw 가 AP 50 여 개를 출력 (대부분 수 초~20 s 전 캐시) → `fresh_bss` 필요 확인 |
+| 직접 입력·변경 | domain 87, 노트북 | `ssid:=turtle09` 로 채널 고정 후 1 Hz, `ros2 param set … target_ssid "서울법인_5G"` 로 바꿔 전체 스캔 → 5520 MHz 고정 → −82~−86 dBm |
+| 자동 선택 | 노트북 | 주변에 `iPhone` 이라는 남의 핫스팟이 있었다 (5745 MHz, −53 dBm) → 직접 입력 권장 |
+| turtle08 통신 영향 | ping 192.168.108.42, 10 Hz × 15 s | 스캔 없음 손실 0 · 한 채널 1 Hz 손실 0, 최대 RTT 11–23 ms · 전체 대역 연속 손실 0, 평균 16 ms·최대 115 ms |
+
+실제 시험에서 확인된 것 (10/10, link 방식):
 - AMCL 은 undock 위치를 스스로 모른다 (`set_initial_pose: False`). 초기위치를 넣어야 `map` 프레임이 생긴다.
 - 로봇 3번 undock 위치는 지도 원점 (0, 0) 이지만 **방향이 yaw π** 다. 0 으로 넣으면 스캔이 지도 밖으로 돈다.
 - 초기위치 공분산을 RViz 기본(x, y 각 0.25)으로 주면 AMCL 공분산이 0.50 에서 시작해, 0.25 아래로 내려갈 때까지(약 3 분, 89 개) 샘플이 제외됐다.
@@ -245,10 +315,12 @@ ros2 launch scv_survey laptop_test.launch.py
 
 - 위치 정확도는 AMCL(보통 5–10 cm)을 넘지 못한다. 노트북 안테나와 `base_link` 사이 거리(0.1–0.2 m)는 반영하지 않았다.
 - 로봇 방향에 따라 RSSI 가 몇 dB 달라질 수 있다 (같은 칸을 반대 방향으로도 지나 보기).
+- scan 은 몇 개의 비콘·probe 응답 값이라 link(드라이버 평균)보다 더 튈 수 있다. 칸 중앙값으로 누른다.
+- 엔진은 시간 구분 없이 샘플을 쌓는다. 한 번 주행 중 핫스팟을 껐다 켜면 같은 칸에 두 상태가 섞인다 (UC-08 은 최근 N 초 창이 필요).
 - 노드를 재시작할 때는 launch 전체를 함께. `manual_tagger` 만 재시작하면 `seq` 가 0 부터 다시 시작해 엔진이 중복으로 버린다.
 - `/survey/heatmap` 은 `docs/interfaces.md` 에 없는 관제 PC 내부 토픽이다. 관제 웹에서 쓰려면 PM 에 등록 요청.
 - 다음 작업 후보
   - launch 인자 `max_pose_cov`, `init_pose:=0,0,3.14` (시작할 때 작은 공분산으로 AMCL 초기위치 자동 설정)
   - `manual_tagger` 의 tf 모드를 실제 `survey_buffer` (로봇 PC, 버퍼·`survey/sync` 재발행)로 옮기기
-  - RPi 에서 `rssi_scanner` (`iface:=wlan0`) 로 바꾸기
+  - RPi 에서 `rssi_scanner` (`iface:=wlan0`) 로 바꾸기 — RPi 에도 `setcap`, 한 채널 스캔 시간·검출률·ROS 통신 영향 다시 확인
   - 칸 사이를 부드럽게 채우는 표시 (NetSpot 식 보간)

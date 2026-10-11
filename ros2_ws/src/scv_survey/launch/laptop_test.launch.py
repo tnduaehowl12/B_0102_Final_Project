@@ -1,17 +1,21 @@
-"""노트북 단위시험: test_map 위에 노트북으로 잰 turtle08 RSSI 를 0.5 m 칸 색으로 표시한다.
+"""노트북 단위시험: test_map 위에 노트북으로 잰 핫스팟 RSSI 를 0.5 m 칸 색으로 표시한다.
+
+측정은 iw scan 으로 주변 AP 중 ssid 를 듣는다 (노트북은 turtle08 에 붙은 채로). ssid 를 비우면
+SSID 에 ssid_pattern(iPhone) 이 들어간 AP 중 처음 가장 센 것으로 자동 고정.
 
 노트북만 들고 (위치는 RViz 클릭):
-  ros2 launch scv_survey laptop_test.launch.py
+  ros2 launch scv_survey laptop_test.launch.py ssid:="csh의 iPhone"
 노트북을 TurtleBot4 위에 올리고 (위치는 로봇 TF, 지도·AMCL 은 turtlebot4_navigation localization 이 띄움):
-  ros2 launch scv_survey laptop_test.launch.py pose_source:=tf robot_ns:=robot4
+  ros2 launch scv_survey laptop_test.launch.py pose_source:=tf robot_ns:=robot3 ssid:="csh의 iPhone"
 """
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def _nodes(context):
@@ -35,9 +39,22 @@ def _nodes(context):
                          'samples_per_point': int(arg('samples_per_point'))}
         tf_remaps, rviz_remaps, map_topic = [], [], '/map'
 
+    ssid = arg('ssid')
+    target = f"'{ssid}' (직접 입력)" if ssid else f"자동 — SSID 에 '{arg('ssid_pattern')}' 가 들어간 AP"
     nodes = [
+        LogInfo(msg=f"[scv_survey] RSSI 측정: iw {arg('method')} · {arg('iface')} · 대상 {target} · "
+                    f"{arg('rate_hz')} Hz · /{ns}/survey/raw · CSV {csv_path}"),
         Node(package='scv_survey', executable='rssi_scanner', namespace=ns, output='screen',
-             parameters=[{'iface': arg('iface'), 'target_ssid': arg('ssid'), 'robot_id': ns}]),
+             parameters=[{'iface': arg('iface'), 'method': arg('method'),
+                          # 숫자로만 된 SSID 도 문자열로 넘기려고 ParameterValue
+                          'target_ssid': ParameterValue(ssid, value_type=str),
+                          'ssid_pattern': ParameterValue(arg('ssid_pattern'), value_type=str),
+                          'robot_id': ns, 'rate_hz': float(arg('rate_hz')),
+                          'rescan_after_miss': int(arg('rescan_after_miss')),
+                          'scan_retries': int(arg('scan_retries')),
+                          'full_scan_interval': float(arg('full_scan_interval')),
+                          'log_samples': arg('log_samples') == 'true',
+                          'status_period': float(arg('status_period'))}]),
         Node(package='scv_survey', executable='manual_tagger', namespace=ns, output='screen',
              parameters=[tagger_params], remappings=tf_remaps),
         Node(package='scv_survey', executable='network_map_engine', output='screen',
@@ -75,7 +92,23 @@ def generate_launch_description():
         DeclareLaunchArgument('map', default_value=os.path.join(share, 'maps', 'test_map.yaml'),
                               description='manual 에서만 씀'),
         DeclareLaunchArgument('iface', default_value='wlo1'),
-        DeclareLaunchArgument('ssid', default_value='turtle08'),
+        DeclareLaunchArgument('method', default_value='scan',
+                              description='scan: 주변 AP 스캔 / link: 붙어 있는 AP (예전 방식)'),
+        DeclareLaunchArgument('ssid', default_value='',
+                              description='측정할 SSID (예: "csh의 iPhone"). 비우면 ssid_pattern 으로 자동 선택'),
+        DeclareLaunchArgument('ssid_pattern', default_value='iPhone',
+                              description='ssid 를 비웠을 때 이 글자가 들어간 AP 중 가장 센 것으로 고정'),
+        DeclareLaunchArgument('rate_hz', default_value='1.0'),
+        DeclareLaunchArgument('rescan_after_miss', default_value='3',
+                              description='이 횟수 연속 미검출이면 전체 대역 스캔으로 채널 재탐색'),
+        DeclareLaunchArgument('scan_retries', default_value='2',
+                              description='한 채널 스캔에서 못 들으면 같은 채널을 다시 스캔하는 횟수'),
+        DeclareLaunchArgument('full_scan_interval', default_value='10.0',
+                              description='재탐색 중 전체 대역 스캔 간격 [s] (한 번에 약 5 s)'),
+        DeclareLaunchArgument('log_samples', default_value='true',
+                              description='측정마다 SSID·dBm 한 줄 로그'),
+        DeclareLaunchArgument('status_period', default_value='10.0',
+                              description='측정 상태 요약 로그 간격 [s], 0 이면 끔'),
         DeclareLaunchArgument('init_x', default_value='0.0'),
         DeclareLaunchArgument('init_y', default_value='0.0'),
         DeclareLaunchArgument('samples_per_point', default_value='5'),
